@@ -13,26 +13,7 @@ var (
 	http_port    string
 	p2p_port     string
 	initialPeers []string
-	blockchain   []*Block
 )
-
-type Block struct {
-	Index        int64
-	PreviousHash string
-	Timestamp    int
-	Data         []byte
-	Hash         string
-}
-
-func getGenesisBlock() *Block {
-	return &Block{
-		Index:        0,
-		PreviousHash: "0",
-		Timestamp:    1498381610,
-		Data:         []byte("my genesis block!!!"),
-		Hash:         "816534932c2b7154836da6afc367695e6337db8a921823784c14378abed4f7d7",
-	}
-}
 
 func initHttpServer() {
 	r := mux.NewRouter()
@@ -47,13 +28,26 @@ func initHttpServer() {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(bc)
-	})
+	}).Methods("GET")
+
+	r.HandleFunc("/mineBlock", func(w http.ResponseWriter, r *http.Request) {
+		newBlock := generateNextBlock([]byte(r.FormValue("data")))
+
+		addBlock(newBlock)
+
+		// TODO: broadcast
+
+		fmt.Println("block added >>>", newBlock)
+
+		w.WriteHeader(200)
+	}).Methods("POST")
 
 	s := &http.Server{
 		Addr:    fmt.Sprintf(":%s", http_port),
 		Handler: r,
 	}
 
+	fmt.Printf("Listening on port http://localhost:%s\n", http_port)
 	s.ListenAndServe()
 }
 
