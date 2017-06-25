@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -42,12 +43,16 @@ func initHttpServer() {
 		w.WriteHeader(200)
 	}).Methods("POST")
 
+	r.HandleFunc("/blocks", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}).Methods("POST")
+
 	s := &http.Server{
 		Addr:    fmt.Sprintf(":%s", http_port),
 		Handler: r,
 	}
 
-	fmt.Printf("Listening on port http://localhost:%s\n", http_port)
+	fmt.Printf("Listening http on port http://localhost:%s\n", http_port)
 	s.ListenAndServe()
 }
 
@@ -62,10 +67,16 @@ func main() {
 		p2p_port = "6001"
 	}
 
+	initialPeersVar := os.Getenv("PEERS")
+	if initialPeersVar != "" {
+		initialPeers = strings.Split(initialPeersVar, ",")
+	} else {
+		initialPeers = make([]string, 0)
+	}
+
 	blockchain = []*Block{getGenesisBlock()}
 
-	initHttpServer()
-
-	fmt.Println(blockchain)
-	fmt.Println("vim-go")
+	connectToPeers(initialPeers)
+	go initHttpServer()
+	initP2PServer()
 }

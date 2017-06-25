@@ -55,6 +55,7 @@ func latestBlock() *Block {
 }
 
 func addBlock(block *Block) {
+	// TODO: add validation
 	blockchain = append(blockchain, block)
 }
 
